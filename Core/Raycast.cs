@@ -21,7 +21,7 @@ namespace GameEngine.Core
                 int bY = (int) MathHelper.Floor(rayWorldPos.Y);
                 int bZ = (int) MathHelper.Floor(rayWorldPos.Z) - ((int)chunkPos.Y * 16);
 
-                if (TerrainGenerator.loadedChunks[chunkPos].data[bX, MathHelper.Clamp(bY, 0, Chunk.Height), bZ] != 0) {
+                if (TerrainGenerator.loadedChunks[chunkPos].data[bX, MathHelper.Clamp(bY, 0, Chunk.Height), bZ].blockType != Rendering.TextureAtlas.BlockType.Air) {
                     return new RaycastInfo(point: rayWorldPos, distance: MathHelper.Abs((rayWorldPos - origin).Length), rayDirection: direction); ; 
                 }
 
@@ -45,7 +45,7 @@ namespace GameEngine.Core
                 int bY = (int)MathHelper.Floor(rayWorldPos.Y);
                 int bZ = (int)MathHelper.Floor(rayWorldPos.Z) - ((int)chunkPos.Y * 16);
 
-                if (TerrainGenerator.loadedChunks[chunkPos].data[bX, MathHelper.Clamp(bY, 0, Chunk.Height), bZ] != 0) {
+                if (TerrainGenerator.loadedChunks[chunkPos].data[bX, MathHelper.Clamp(bY, 0, Chunk.Height), bZ].blockType != Rendering.TextureAtlas.BlockType.Air) {
 
                     info = new RaycastInfo(
                         point: rayWorldPos,

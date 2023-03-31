@@ -1,9 +1,8 @@
-﻿using System.Linq;
-using System.Collections.Generic;
-
-using OpenTK.Mathematics;
-using GameEngine.Core.Rendering;
+﻿using GameEngine.Core.Rendering;
 using GameEngine.Core.Utilities.Managers;
+using OpenTK.Mathematics;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GameEngine.Core.Terrain {
     public class TerrainGenerator {
@@ -13,19 +12,15 @@ namespace GameEngine.Core.Terrain {
         public int RenderDistance { get; private set; }
         public List<Chunk> chunkPool;
 
-        private bool IsBatchingEnabled { get; set; }
 
         private Player player;
         private FastNoise noise;
-        private TextureObject texture;
 
 
-        public TerrainGenerator(TextureInfo info, int renderDistance, Player player) {
-            texture = TextureFactory.Load(info.path);
-            atlas = new TextureAtlas(info.resolution);
-
+        public TerrainGenerator(int renderDistance, Player player, TextureAtlas atlas) {
             this.player = player;
             RenderDistance = renderDistance;
+            this.atlas = atlas;
 
             chunkPool = new List<Chunk>();
             loadedChunks = new Dictionary<Vector2, Chunk>();
@@ -34,18 +29,8 @@ namespace GameEngine.Core.Terrain {
             SpawnChunks();
         }
 
-        public TerrainGenerator(TextureInfo info, int renderDistance, Player player, bool batching) : this(info, renderDistance, player) {
-            IsBatchingEnabled = batching;
-        }
-
-
-
-        public byte[,,] GetData(Vector2 vec) {
+        public BlockState[,,] GetData(Vector2 vec) {
             return loadedChunks[vec].data;
-        }
-
-        public void UseTexture() {
-            texture.Use();
         }
 
         public void BindAll() {
@@ -64,15 +49,15 @@ namespace GameEngine.Core.Terrain {
 
                 chunk.Draw();
             }
-            DisplayManager.Instance.window.Title = $"{i} / {chunks.Length}"; //    { 1 / DisplayManager.Instance.window.UpdateTime }";
+            //DisplayManager.Instance.window.Title = $"{i} / {chunks.Length}"; //    { 1 / DisplayManager.Instance.window.UpdateTime }";
         }
 
-        public static byte[,,] GetEmptyChunkList() {
-            return new byte[Chunk.Width + 1, Chunk.Height + 1, Chunk.Width + 1];
+        public static BlockState[,,] GetEmptyChunkList() {
+            return new BlockState[Chunk.Width + 1, Chunk.Height + 1, Chunk.Width + 1];
         }
 
-        public byte[,,] ChunkData(int chunkX, int chunkZ) {
-            byte[,,] blocks = GetEmptyChunkList();
+        public BlockState[,,] ChunkData(int chunkX, int chunkZ) {
+            BlockState[,,] blocks = GetEmptyChunkList();
 
             for (int x = 0; x < Chunk.Width + 1; x++) {
                 for (int z = 0; z < Chunk.Width + 1; z++) {
@@ -81,8 +66,11 @@ namespace GameEngine.Core.Terrain {
                         int zC = z + chunkZ * Chunk.Width;
 
                         if (noise.GetSimplex(xC, zC) * 10 + y < Chunk.Height * 0.5f) {
-                            blocks[x, y, z] = (byte)TextureAtlas.BlockType.Grass;
+                            blocks[x, y, z] = new BlockState(TextureAtlas.BlockType.Grass);
+                            continue;
                         }
+                        blocks[x, y, z] = new BlockState(TextureAtlas.BlockType.Air);
+
                     }
                 }
             }

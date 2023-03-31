@@ -31,6 +31,7 @@ namespace GameEngine.Core
 
         public void Run() {
             Init();
+
             using GameWindow gameWindow = DisplayManager.Instance.CreateWindow(_gameWindowSettings, _nativeWindowSettings);
             GameTime gameTime = new GameTime();
             gameTime.NormalTick();
@@ -42,7 +43,9 @@ namespace GameEngine.Core
             // confines the mouse to the window
             gameWindow.CursorState = CursorState.Grabbed;
 
-            gameWindow.Load += OnLoad;
+            gameWindow.Load += () => { 
+                OnLoad();
+            };
             gameWindow.UpdateFrame += (FrameEventArgs args) => {
                 gameTime.NormalTick();
                 Update(gameTime);

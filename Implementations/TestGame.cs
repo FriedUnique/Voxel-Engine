@@ -1,6 +1,5 @@
 ﻿using GameEngine.Core.Rendering;
 using GameEngine.Core.Terrain;
-using GameEngine.Core.Utilities.Managers;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -10,12 +9,17 @@ namespace GameEngine.Core {
         public TestGame(string windowTitle, int initialWindowWidth, int initialWindowHeight) : base(windowTitle, initialWindowWidth, initialWindowHeight) { }
 
         // the textures and shaders inside the resources folder have to be set to copy always
-        private const string texturePath = "Resources/Textures/AtlasTexture.png";
+        private const string texturePath = "Resources/Textures/Atlas.png";
         private const string shaderPath = "Resources/Shaders/Default.shader";
+        private const string uiShaderPath = "Resources/Shaders/DefaultUI.shader";
+
 
         private Shader shader;
+        private Shader uiShader;
         private TerrainGenerator tg;
         private Player player;
+
+        private TextureAtlas atlas;
 
         protected override void Init() {
             Debug.level = 0;
@@ -25,28 +29,36 @@ namespace GameEngine.Core {
             shader = new Shader(Shader.ParseShader(shaderPath));
             shader.Compile();
 
+            uiShader = new Shader(Shader.ParseShader(uiShaderPath));
+            uiShader.Compile();
+            
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.CullFace);
 
-            TextureInfo info = new TextureInfo(texturePath, 16f); // specific for this texture atlas
+            TextureInfo info = new TextureInfo(texturePath, 8f); // specific for this texture atlas
+            atlas = new TextureAtlas(info);
 
-            player = new Player(new Vector3(14, 20, 12));
-            tg = new TerrainGenerator(info, 3, player);
+            player = new Player(new Vector3(14, 20, 12), atlas);
+            tg = new TerrainGenerator(3, player, atlas);
         }
 
         protected override void Render(GameTime time) {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.ClearColor(Color4.CornflowerBlue);
 
-            tg.UseTexture();
-            shader.Use();
+            atlas.UseTexture();
 
+            // objects with transform
+            shader.Use();
             tg.BindAll();
 
             Matrix4 mvp = Matrix4.CreateRotationY(0) * player.cam.GetViewMatrix() * player.cam.GetProjectionMatrix();
             int mvpID = GL.GetUniformLocation(shader.ProgramId, "MVP");
             GL.UniformMatrix4(mvpID, false, ref mvp);
 
+            // ui elements
+            uiShader.Use();
+            player.Draw();
         }
 
         protected override void Update(GameTime time) {

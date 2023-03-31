@@ -11,8 +11,8 @@ namespace GameEngine.Core.Terrain {
         public const int Height = 32;
         public const float LightFallOff = 0.08f;
 
-        public byte[,,] data;
-        private float[,,] lightData;
+        public BlockState[,,] data;
+
         // que em
         public Queue<BlockModification> modifications = new Queue<BlockModification>();
 
@@ -32,7 +32,7 @@ namespace GameEngine.Core.Terrain {
 
         private TextureAtlas atlas;
 
-        public Chunk(Vector2 pos, byte[,,] data, TextureAtlas atlas) {
+        public Chunk(Vector2 pos, BlockState[,,] data, TextureAtlas atlas) {
             chunkX = (int)pos.X;
             chunkZ = (int)pos.Y;
 
@@ -52,8 +52,6 @@ namespace GameEngine.Core.Terrain {
             vertexArray = new VertexArray();
             vertexBuffer = new VertexBuffer();
             indexBuffer = new IndexBuffer();
-
-            lightData = new float[Chunk.Width + 1, Chunk.Height + 1, Chunk.Width + 1];
 
             BuildMesh();
         }
@@ -100,12 +98,15 @@ namespace GameEngine.Core.Terrain {
                     float lightRay = 1f;
 
                     for (int y = Height - 1; y >= 0; y--) {
-                        if (data[x, y, z] != 0) {
-                            float trans = TextureAtlas.TexturePositions[(TextureAtlas.BlockType)data[x, y, z]].transparencyAmount;
+
+                        if (data[x, y, z] == null) { continue; }
+
+                        if (data[x, y, z].blockType != TextureAtlas.BlockType.Air) {
+                            float trans = TextureAtlas.TexturePositions[data[x, y, z].blockType].transparencyAmount;
                             if (trans < lightRay) { lightRay = trans; }
                         }
 
-                        lightData[x, y, z] = lightRay;
+                        data[x, y, z].lightPercent = lightRay;
 
                         if (lightRay > LightFallOff) { litVoxels.Enqueue(new Vector3i(x, y, z)); }
                     }
@@ -123,12 +124,12 @@ namespace GameEngine.Core.Terrain {
 
                     if (IsBlockInChunk(neighbor.X, neighbor.Y, neighbor.Z) == false) { continue; }
 
-                    if (lightData[neighbor.X, neighbor.Y, neighbor.Z] > lightData[v.X, v.Y, v.Z] - LightFallOff) { continue; }
+                    if (data[neighbor.X, neighbor.Y, neighbor.Z].lightPercent > data[v.X, v.Y, v.Z].lightPercent - LightFallOff) { continue; }
 
 
-                    lightData[neighbor.X, neighbor.Y, neighbor.Z] = Math.Clamp(lightData[v.X, v.Y, v.Z] - LightFallOff, 0.1f, 1f);
+                    data[neighbor.X, neighbor.Y, neighbor.Z].lightPercent = Math.Clamp(data[v.X, v.Y, v.Z].lightPercent - LightFallOff, 0.1f, 1f);
 
-                    if (lightData[neighbor.X, neighbor.Y, neighbor.Z] > LightFallOff) { litVoxels.Enqueue(neighbor); }
+                    if (data[neighbor.X, neighbor.Y, neighbor.Z].lightPercent > LightFallOff) { litVoxels.Enqueue(neighbor); }
 
                 }
 
@@ -147,7 +148,7 @@ namespace GameEngine.Core.Terrain {
 
             while (modifications.Count > 0) {
                 BlockModification mod = modifications.Dequeue();
-                data[mod.blockPosition.X, mod.blockPosition.Y, mod.blockPosition.Z] = (byte)mod.blockType;
+                data[mod.blockPosition.X, mod.blockPosition.Y, mod.blockPosition.Z].blockType = mod.blockType;
             }
 
             CalculateLight();
@@ -157,30 +158,30 @@ namespace GameEngine.Core.Terrain {
                 for (int z = 0; z < Width; z++) {
                     for (int y = 0; y < Height; y++) {
 
-                        if (data[x, y, z] == 0) continue;
+                        if (data[x, y, z].blockType == TextureAtlas.BlockType.Air) continue;
                         if (highestPoint < y) { highestPoint = y; }
 
                         Vector3 pos = new Vector3(x + chunkX * (Width - 1), y, z + chunkZ * (Width - 1));
 
-                        TextureAtlas.BlockType b = (TextureAtlas.BlockType)data[x, y, z];
-                        float light = lightData[x, y, z];
+                        TextureAtlas.BlockType b = data[x, y, z].blockType;
+                        float light = data[x, y, z].lightPercent;
 
-                        if (data[x, y + 1, z] == (int)TextureAtlas.BlockType.Air) {
+                        if (TextureAtlas.IsBlockTransparent(data[x, y + 1, z].blockType)) {
                             TopFace(pos, b, light);
                         }
-                        if (data[x, MathHelper.Max(y - 1, 0), z] == (int)TextureAtlas.BlockType.Air) {
+                        if (TextureAtlas.IsBlockTransparent(data[x, MathHelper.Max(y - 1, 0), z].blockType)) {
                             BottomFace(pos, b, light);
                         }
-                        if (data[x + 1, y, z] == (int)TextureAtlas.BlockType.Air) {
+                        if (TextureAtlas.IsBlockTransparent(data[x + 1, y, z].blockType)) {
                             RightFace(pos, b, light);
                         }
-                        if (x - 1 < 0 || data[x - 1, y, z] == (int)TextureAtlas.BlockType.Air) {
+                        if (x - 1 < 0 || TextureAtlas.IsBlockTransparent(data[x - 1, y, z].blockType)) {
                             LeftFace(pos, b, light);
                         }
-                        if (z - 1 < 0 || data[x, y, z - 1] == (int)TextureAtlas.BlockType.Air) {
+                        if (z - 1 < 0 || TextureAtlas.IsBlockTransparent(data[x, y, z - 1].blockType)) {
                             BackFace(pos, b, light);
                         }
-                        if (data[x, y, z + 1] == (int)TextureAtlas.BlockType.Air) {
+                        if (TextureAtlas.IsBlockTransparent(data[x, y, z + 1].blockType)) {
                             FrontFace(pos, b, light);
                         }
 
@@ -286,7 +287,6 @@ namespace GameEngine.Core.Terrain {
 
             vertices.AddRange(face);
         }
-
     }
 }
 

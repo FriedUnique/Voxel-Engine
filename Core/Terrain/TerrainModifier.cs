@@ -5,7 +5,9 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace GameEngine.Core.Terrain {
     public class TerrainModifier {
-        private const int playerReach = 5;
+        public const int PlayerReach = 5;
+
+        private int blockSelected;
 
         private Camera cam;
 
@@ -14,6 +16,11 @@ namespace GameEngine.Core.Terrain {
 
         public TerrainModifier(Camera cam) {
             this.cam = cam;
+            blockSelected = (int)TextureAtlas.BlockType.Wood;
+        }
+
+        private void SelectBlock() {
+
         }
 
         public void Update(float dt) {
@@ -21,7 +28,7 @@ namespace GameEngine.Core.Terrain {
 
             if ((Input.MousePress(MouseButton.Left) || Input.MousePress(MouseButton.Right)) && nextPlace <= 0) {
                 nextPlace = placeIntervall;
-                if (Raycast.InterceptTerrain(cam.Position, cam.Front, playerReach, 0.1f, out RaycastInfo info) == false) return;
+                if (Raycast.InterceptTerrain(cam.Position, cam.Front, PlayerReach, 0.1f, out RaycastInfo info) == false) return;
 
                 Vector3 p;
 
@@ -40,7 +47,7 @@ namespace GameEngine.Core.Terrain {
                 if (Input.MousePress(MouseButton.Left)) {
                     chunk.Modify(new Vector3i(bX, bY, bZ), TextureAtlas.BlockType.Air);
                 } else {
-                    chunk.Modify(new Vector3i(bX, bY, bZ), TextureAtlas.BlockType.Timo);
+                    chunk.Modify(new Vector3i(bX, bY, bZ), TextureAtlas.BlockType.Brick);
                 }
 
                 chunk.BuildMesh();

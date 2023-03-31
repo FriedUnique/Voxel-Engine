@@ -8,18 +8,17 @@ namespace GameEngine.Core.Terrain {
         public Vector2 bottom;
 
         public float transparencyAmount;
+        public bool isTransparent = false;
 
-        public BlockInfo(Vector2 t, Vector2 s, Vector2 b, float transparencyAmount = 0f) {
+        public BlockInfo(Vector2 t, Vector2 s, Vector2 b, float transparencyAmount = 0f, bool isTransparent = false) {
             top = t;
             side = s;
             bottom = b;
             this.transparencyAmount = transparencyAmount;
+            this.isTransparent = isTransparent;
         }
 
-        public BlockInfo(Vector2 face, float transparencyAmount = 0f) {
-            top = side = bottom = face;
-            this.transparencyAmount = transparencyAmount;
-        }
+        public BlockInfo(Vector2 face, float transparencyAmount = 0f, bool isTransparent = false) : this(face, face, face, transparencyAmount, isTransparent){}
     }
 
     public class BlockModification {

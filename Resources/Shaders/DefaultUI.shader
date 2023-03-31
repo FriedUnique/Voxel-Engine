@@ -8,12 +8,10 @@ layout(location = 2) in float aBrightness;
 out vec2 texCoord;
 out float brightness;
 
-uniform mat4 MVP;
-
 
 void main() 
 {
-    gl_Position = MVP * vec4(aPosition, 1.0);
+    gl_Position = vec4(aPosition, 1.0);
     texCoord = aTexCoord;
     brightness = aBrightness;
 }

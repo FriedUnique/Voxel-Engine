@@ -116,8 +116,8 @@ namespace GameEngine.Core.Rendering {
 
 
 
-            Yaw += Input.MouseDelta("x") * sens;
-            Pitch -= Input.MouseDelta("y") * sens;
+            Yaw += Input.MouseDelta.X * sens;
+            Pitch -= Input.MouseDelta.Y * sens;
         }
 
         public void CalculateFrustum() {
